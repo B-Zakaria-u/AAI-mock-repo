@@ -36,9 +36,11 @@ class IssueScooutAgent(BaseAgentNode):
         llm_with_tools = llm.bind_tools(all_tools)
 
         # ── Step 1: fetch issues ─────────────────────────────────────────────
+        print("[ Issue Scout ] Fetching open unassigned issues from GitHub...")
         issues_text = list_open_issues.invoke({"max_results": 10})
 
         if "No open" in issues_text:
+            print("[ Issue Scout ] No open unassigned issues found. Stopping workflow.")
             # Nothing to work on — return neutral state so graph can END
             return {
                 "ticket_text": "",
@@ -57,6 +59,7 @@ class IssueScooutAgent(BaseAgentNode):
             )),
             HumanMessage(content=issues_text),
         ]
+        print("[ Issue Scout ] Asking LLM to pick the best issue...")
         pick_response = llm.invoke(pick_messages)
         raw = pick_response.content
         if isinstance(raw, list):
@@ -69,6 +72,7 @@ class IssueScooutAgent(BaseAgentNode):
         issue_number = int(match.group())
 
         # ── Step 3: self-assign the issue ────────────────────────────────────
+        print(f"[ Issue Scout ] Selected issue #{issue_number}. Assigning to self...")
         assign_issue.invoke({"issue_number": issue_number})
 
         # ── Step 4: fetch full issue body via PyGithub ───────────────────────
@@ -83,9 +87,11 @@ class IssueScooutAgent(BaseAgentNode):
         branch_name = f"fix/issue-{issue_number}-{slug}"
 
         # ── Step 5: clone / pull repo ────────────────────────────────────────
+        print(f"[ Issue Scout ] Cloning/pulling repository: {repo_url} ...")
         clone_or_pull_repo.invoke({"repo_url": repo_url})
 
         # ── Step 6: create fix branch ────────────────────────────────────────
+        print(f"[ Issue Scout ] Creating local fix branch: {branch_name} ...")
         create_branch.invoke({"branch_name": branch_name})
 
         return {

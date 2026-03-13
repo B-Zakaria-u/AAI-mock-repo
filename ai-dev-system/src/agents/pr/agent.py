@@ -33,6 +33,8 @@ class PRAgent(BaseAgentNode):
             )),
             HumanMessage(content=ticket_text),
         ]
+        
+        print("[ PR Agent ] Drafting commit message and Pull Request body...")
         raw = llm.invoke(draft_messages).content
         if isinstance(raw, list):
             raw = "".join(b.get("text", "") if isinstance(b, dict) else str(b) for b in raw)
@@ -49,6 +51,7 @@ class PRAgent(BaseAgentNode):
                 pr_body = line.replace("PR_BODY:", "").strip()
 
         # ── Push the branch ───────────────────────────────────────────────────
+        print(f"[ PR Agent ] Committing and pushing to branch: {branch_name} ...")
         push_result = commit_and_push.invoke({
             "commit_message": commit_msg,
             "branch_name": branch_name,
@@ -56,6 +59,7 @@ class PRAgent(BaseAgentNode):
 
         # ── Open the PR ───────────────────────────────────────────────────────
         pr_title = f"fix: {ticket_text.splitlines()[0][:72]}"
+        print(f"[ PR Agent ] Opening GitHub Pull Request: '{pr_title}' ...")
         pr_result = create_pull_request.invoke({
             "branch_name": branch_name,
             "title": pr_title,

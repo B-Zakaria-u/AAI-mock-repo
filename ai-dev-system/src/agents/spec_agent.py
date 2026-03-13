@@ -20,8 +20,10 @@ def spec_agent_node(state: GraphState) -> dict:
         HumanMessage(content=prompt)
     ]
     
+    print("[ Spec Agent ] Generating technical specification...")
     response = llm.invoke(messages)
     raw = response.content
     if isinstance(raw, list):
         raw = "".join(b.get("text", "") if isinstance(b, dict) else str(b) for b in raw)
+    print("[ Spec Agent ] Specification generated successfully.")
     return {"spec": str(raw)}

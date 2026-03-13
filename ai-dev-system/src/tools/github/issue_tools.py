@@ -31,11 +31,18 @@ def list_open_issues(max_results: int = 10) -> str:
     """
     try:
         client = _get_client()
+        app_user = client.get_user().login
         repo = _get_repo(client)
-        issues = [
-            i for i in repo.get_issues(state="open", assignee="none")
-            if not i.pull_request  # exclude PRs from the issue list
-        ][:max_results]
+        
+        issues = []
+        for i in repo.get_issues(state="open"):
+            if i.pull_request:
+                continue
+            # Include if unassigned OR if already assigned to our bot
+            if not i.assignees or any(a.login == app_user for a in i.assignees):
+                issues.append(i)
+            if len(issues) >= max_results:
+                break
 
         if not issues:
             return "No open unassigned issues found."

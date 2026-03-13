@@ -22,6 +22,12 @@ from src.agents.testing_agent import testing_agent_node
 from src.agents.pr_agent import pr_agent_node
 
 
+def _route_issue_scout(state: GraphState) -> str:
+    if not state.get("issue_number"):
+        return END
+    return "Spec Agent"
+
+
 def _route_validator(state: GraphState) -> str:
     return "Coding Agent" if state.get("spec_feedback") == "VALID" else "Spec Agent"
 
@@ -50,7 +56,7 @@ def build_graph():
     workflow.set_entry_point("Issue Scout")
 
     # ── Edges ─────────────────────────────────────────────────────────────────
-    workflow.add_edge("Issue Scout",    "Spec Agent")
+    workflow.add_conditional_edges("Issue Scout", _route_issue_scout)
     workflow.add_edge("Spec Agent",     "Validator Agent")
     workflow.add_conditional_edges("Validator Agent", _route_validator)
     workflow.add_edge("Coding Agent",   "Testing Agent")

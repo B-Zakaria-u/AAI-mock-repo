@@ -76,6 +76,7 @@ def validator_agent_node(state: GraphState) -> dict:
         HumanMessage(content=verdict_prompt)
     ]
 
+    print("[ Validator Agent ] Evaluating spec against codebase context for final verdict...")
     response = llm.invoke(messages)
     raw = response.content
     if isinstance(raw, list):
