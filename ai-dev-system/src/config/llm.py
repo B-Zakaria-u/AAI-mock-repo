@@ -1,18 +1,15 @@
-"""LLM factory — single source of truth for the ChatOpenAI client."""
-from langchain_openai import ChatOpenAI
+"""LLM factory — returns a ChatGoogleGenerativeAI client (Gemini 2.5 Flash)."""
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 
-def get_llm() -> ChatOpenAI:
+def get_llm() -> ChatGoogleGenerativeAI:
     """
-    Return a ChatOpenAI instance wired to the local llama-server endpoint.
+    Return a Gemini 2.5 Flash chat model via the Google Generative AI API.
 
-    The server is expected to expose an OpenAI-compatible API at
-    ``http://127.0.0.1:8080/v1``.  No real API key is required for a
-    local deployment.
+    Requires the ``GOOGLE_API_KEY`` environment variable to be set.
+    Temperature is kept low (0.1) for deterministic, code-focused outputs.
     """
-    return ChatOpenAI(
-        openai_api_base="http://127.0.0.1:8080/v1",
-        openai_api_key="not-needed",
-        streaming=True,
+    return ChatGoogleGenerativeAI(
+        model="gemini-2.5-flash",
         temperature=0.1,
     )
