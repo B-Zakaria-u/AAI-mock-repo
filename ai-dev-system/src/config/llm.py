@@ -10,6 +10,6 @@ def get_llm() -> ChatGoogleGenerativeAI:
     Temperature is kept low (0.1) for deterministic, code-focused outputs.
     """
     return ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
+        model="gemini-3.1-flash-lite",
         temperature=0.1,
     )

@@ -77,7 +77,10 @@ def validator_agent_node(state: GraphState) -> dict:
     ]
 
     response = llm.invoke(messages)
-    content = response.content.strip()
+    raw = response.content
+    if isinstance(raw, list):
+        raw = "".join(b.get("text", "") if isinstance(b, dict) else str(b) for b in raw)
+    content = str(raw).strip()
 
     # Handle the 'VALID' keyword precisely
     if content.upper().startswith("VALID"):

@@ -35,8 +35,11 @@ def _base_state(ticket_text: str = "") -> dict:
 def _extract_final(outputs: list[dict]) -> RunResponse:
     final: dict = {}
     for o in outputs:
+        node_name = list(o.keys())[0]
+        print(f"[pipeline] Node complete: {node_name}")
         for v in o.values():
             final.update(v)
+    print("[pipeline] Run finished.")
     return RunResponse(
         spec=final.get("spec", ""),
         spec_feedback=final.get("spec_feedback", ""),
@@ -50,8 +53,10 @@ def _extract_final(outputs: list[dict]) -> RunResponse:
 async def _sse_stream(graph, initial_state: dict) -> AsyncGenerator[str, None]:
     for output in graph.stream(initial_state):
         node_name = list(output.keys())[0]
+        print(f"[pipeline] Node stream: {node_name}")
         yield f"data: [node:{node_name}] {output[node_name]}\n\n"
         await asyncio.sleep(0)
+    print("[pipeline] Streaming run finished.")
 
 
 # --------------------------------------------------------------------------- #

@@ -58,7 +58,10 @@ class IssueScooutAgent(BaseAgentNode):
             HumanMessage(content=issues_text),
         ]
         pick_response = llm.invoke(pick_messages)
-        raw = pick_response.content.strip()
+        raw = pick_response.content
+        if isinstance(raw, list):
+            raw = "".join(b.get("text", "") if isinstance(b, dict) else str(b) for b in raw)
+        raw = str(raw).strip()
         match = re.search(r"\d+", raw)
         if not match:
             return {"ticket_text": "", "issue_number": 0, "branch_name": "", "repo_url": ""}

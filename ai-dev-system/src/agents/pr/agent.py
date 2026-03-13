@@ -33,7 +33,10 @@ class PRAgent(BaseAgentNode):
             )),
             HumanMessage(content=ticket_text),
         ]
-        draft = llm.invoke(draft_messages).content
+        raw = llm.invoke(draft_messages).content
+        if isinstance(raw, list):
+            raw = "".join(b.get("text", "") if isinstance(b, dict) else str(b) for b in raw)
+        draft = str(raw).strip()
 
         # Parse COMMIT and PR_BODY from the LLM output
         commit_msg = "fix: automated patch via AI Dev System"
