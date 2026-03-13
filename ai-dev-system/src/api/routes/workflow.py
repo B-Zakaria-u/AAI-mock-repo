@@ -25,6 +25,7 @@ def _base_state(ticket_text: str = "") -> dict:
         "repo_url": "",
         "spec": "",
         "spec_feedback": "",
+        "spec_iteration_count": 0,
         "test_output": "",
         "tests_passed": False,
         "pr_url": "",

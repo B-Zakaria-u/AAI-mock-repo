@@ -10,6 +10,7 @@ def spec_agent_node(state: GraphState) -> dict:
     llm = get_llm()
     ticket_text = state.get("ticket_text", "")
     feedback = state.get("spec_feedback", "")
+    iteration_count = state.get("spec_iteration_count", 0)
     
     prompt = f"Please write a robust technical specification for this ticket:\n\n{ticket_text}\n"
     if feedback and feedback != "VALID":
@@ -26,4 +27,7 @@ def spec_agent_node(state: GraphState) -> dict:
     if isinstance(raw, list):
         raw = "".join(b.get("text", "") if isinstance(b, dict) else str(b) for b in raw)
     print("[ Spec Agent ] Specification generated successfully.")
-    return {"spec": str(raw)}
+    return {
+        "spec": str(raw),
+        "spec_iteration_count": iteration_count + 1
+    }

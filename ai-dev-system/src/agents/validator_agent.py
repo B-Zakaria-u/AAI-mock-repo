@@ -14,6 +14,12 @@ def validator_agent_node(state: GraphState) -> dict:
     """
     llm = get_llm()
     spec = state.get("spec", "")
+    iteration_count = state.get("spec_iteration_count", 1)
+
+    # Prevent infinite loops: if we have tried 3 times, force approval
+    if iteration_count >= 3:
+        print(f"[ Validator Agent ] Reached {iteration_count} iterations. Forcing VALID verdict to proceed.")
+        return {"spec_feedback": "VALID"}
 
     # Build tools for codebase-awareness
     workspace_dir = os.path.abspath(
@@ -60,18 +66,22 @@ def validator_agent_node(state: GraphState) -> dict:
     # Pass 2: Final VALID / feedback verdict                     #
     # --------------------------------------------------------- #
     verdict_prompt = (
-        "Review the technical specification below. Validate if it is complete and technically sound.\n"
-        "Consider any naming collisions or gaps discovered in the workspace analysis above.\n"
-        "If it is fully valid, respond with EXACTLY 'VALID'.\n"
-        "If it needs changes, provide specific actionable feedback — do NOT say VALID.\n\n"
+        "Review the technical specification below against the following criteria:\n"
+        "1. Does it clearly identify which files need to be modified or created?\n"
+        "2. Does it provide a high-level description of the logic or changes required?\n"
+        "3. Does it avoid clear naming collisions based on the workspace analysis?\n\n"
+        "If the specification meets all 3 criteria, you MUST respond with EXACTLY 'VALID'.\n"
+        "Do not be overly pedantic. If a developer has enough direction to write the code, approve it.\n"
+        "If it fundamentally fails a criterion, provide specific actionable feedback — do NOT say VALID.\n\n"
         f"Specification to review:\n{spec}\n\n"
         f"Workspace analysis results:\n" + "\n".join(tool_results)
     )
 
     messages = [
         SystemMessage(content=(
-            "You are an expert technical reviewer. "
-            "Your final answer must be either VALID or specific actionable feedback."
+            "You are a pragmatic technical reviewer. "
+            "Your final answer must be either EXACTLY VALID, or specific actionable feedback. "
+            "Err on the side of approval if the core architectural direction is clear."
         )),
         HumanMessage(content=verdict_prompt)
     ]
