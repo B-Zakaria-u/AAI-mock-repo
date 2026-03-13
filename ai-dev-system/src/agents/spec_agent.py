@@ -1,5 +1,5 @@
 from src.state import GraphState
-from src.llm_config import get_llm
+from src.config.llm import get_llm
 from langchain_core.messages import SystemMessage, HumanMessage
 
 def spec_agent_node(state: GraphState) -> dict:

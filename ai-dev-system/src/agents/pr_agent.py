@@ -1,6 +1,6 @@
 from src.state import GraphState
-from src.llm_config import get_llm
-from src.tools.gitlab_tools import get_gitlab_tools
+from src.config.llm import get_llm
+from src.tools.gitlab import get_gitlab_tools
 from langchain_core.messages import SystemMessage, HumanMessage
 
 def pr_agent_node(state: GraphState) -> dict:
