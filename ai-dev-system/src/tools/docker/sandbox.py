@@ -31,7 +31,7 @@ def run_tests_in_sandbox(workspace_path: str) -> str:
     try:
         output = client.containers.run(
             image="python:3.11-slim",
-            command='sh -c "pip install pytest --quiet && cd /workspace && pytest"',
+            command='sh -c "if [ -f /workspace/requirements.txt ]; then pip install -r /workspace/requirements.txt --quiet; fi && pip install pytest --quiet && cd /workspace && pytest"',
             volumes={abs_workspace: {"bind": "/workspace", "mode": "rw"}},
             working_dir="/workspace",
             detach=False,

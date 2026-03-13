@@ -12,3 +12,4 @@ flake8
 networkx
 fastapi
 uvicorn[standard]
+ddgs
