@@ -55,23 +55,22 @@ def list_open_issues(max_results: int = 10) -> str:
 @tool
 def assign_issue(issue_number: int) -> str:
     """
-    Self-assign a GitHub issue to the configured GITHUB_ASSIGNEE.
+    Self-assign a GitHub issue to the account that owns the GITHUB_TOKEN.
 
-    This prevents parallel pipeline runs from picking the same ticket.
+    The assignee is resolved automatically from the authenticated token,
+    so no ``GITHUB_ASSIGNEE`` environment variable is required.
 
     Args:
         issue_number: The GitHub issue number to assign.
     """
     try:
-        assignee = os.environ.get("GITHUB_ASSIGNEE")
-        if not assignee:
-            raise EnvironmentError("GITHUB_ASSIGNEE environment variable is not set.")
-
         client = _get_client()
+        # Resolve the app's own identity from the token
+        app_user = client.get_user().login
         repo = _get_repo(client)
         issue = repo.get_issue(issue_number)
-        issue.add_to_assignees(assignee)
-        return f"Issue #{issue_number} successfully assigned to @{assignee}."
+        issue.add_to_assignees(app_user)
+        return f"Issue #{issue_number} successfully assigned to @{app_user}."
 
     except GithubException as exc:
         return f"GitHub API error: {exc.data}"
