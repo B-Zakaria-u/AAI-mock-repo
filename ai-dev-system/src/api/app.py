@@ -20,7 +20,7 @@ def create_app() -> FastAPI:
         description=(
             "Multi-agent AI system that takes a development ticket, writes a "
             "technical spec, implements code, runs tests in a Docker sandbox, "
-            "and opens a GitLab Merge Request."
+            "and opens a GitHub Pull Request."
         ),
         version="1.0.0",
     )

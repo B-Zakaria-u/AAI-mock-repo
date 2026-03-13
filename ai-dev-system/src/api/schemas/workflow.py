@@ -20,5 +20,5 @@ class RunResponse(BaseModel):
     spec_feedback: str = Field(description="Last feedback from the Validator Agent.")
     test_output: str = Field(description="Raw stdout/stderr from the Docker pytest run.")
     tests_passed: bool = Field(description="Whether all tests passed.")
-    pr_url: str = Field(description="URL of the opened GitLab Merge Request.")
+    pr_url: str = Field(description="URL of the opened GitHub Pull Request.")
     iteration_count: int = Field(description="Total coding iteration cycles executed.")

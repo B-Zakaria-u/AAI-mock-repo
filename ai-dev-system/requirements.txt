@@ -5,7 +5,8 @@ langgraph
 docker
 python-dotenv
 pytest
-python-gitlab
+PyGithub
+gitpython
 duckduckgo-search
 flake8
 networkx
