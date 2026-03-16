@@ -5,7 +5,7 @@ Security perimeter
 * Only the ``workspace/`` directory is mounted (read-write).
 * The container is always removed after execution (``remove=True``).
 * Tests are run inside an ``ubuntu:latest`` image. The repository MUST
-  provide a ``test.sh`` script to be executed. Null command if no test.sh.
+  provide a ``script.sh`` script to be executed.
 """
 import os
 
@@ -16,7 +16,7 @@ from langchain_core.tools import tool
 @tool
 def run_tests_in_sandbox(workspace_path: str) -> str:
     """
-    Run the repository's ``test.sh`` script inside an ephemeral Ubuntu container.
+    Run the repository's ``script.sh`` script inside an ephemeral Ubuntu container.
 
     The *workspace_path* directory is mounted as ``/workspace`` inside the
     container.  On success the full pytest stdout is returned; on failure
@@ -31,7 +31,7 @@ def run_tests_in_sandbox(workspace_path: str) -> str:
     try:
         output = client.containers.run(
             image="ubuntu:latest",
-            command='sh -c "if [ -f /workspace/test.sh ]; then chmod +x /workspace/test.sh && /workspace/test.sh; else echo \'No test.sh found. Skipping tests.\'; fi"',
+            command='sh -c "chmod +x /workspace/script.sh && /workspace/script.sh"',
             volumes={abs_workspace: {"bind": "/workspace", "mode": "rw"}},
             working_dir="/workspace",
             detach=False,

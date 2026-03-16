@@ -69,7 +69,13 @@ class PRAgent(BaseAgentNode):
         # Extract URL from result string
         pr_url = ""
         if "http" in pr_result:
-            pr_url = [w for w in pr_result.split() if w.startswith("http")][0]
+            urls = [w for w in pr_result.split() if "http" in w]
+            for url in urls:
+                # Basic cleaning of URL in case it's in trailing punctuation/brackets
+                clean_url = url.strip("()[]{},;\"'")
+                if clean_url.startswith("http"):
+                    pr_url = clean_url
+                    break
 
         return {"pr_url": pr_url}
 

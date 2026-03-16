@@ -31,9 +31,11 @@ def clone_or_pull_repo(repo_url: str) -> str:
         if os.path.isdir(os.path.join(workspace, ".git")):
             repo = git.Repo(workspace)
             repo.remotes.origin.pull("main")
+            print(f"Project pulled to absolute path: {workspace}")
             return f"Pulled latest changes into {workspace}."
         else:
             git.Repo.clone_from(auth_url, workspace)
+            print(f"Project pulled to absolute path: {workspace}")
             return f"Cloned {repo_url} into {workspace}."
     except git.GitCommandError as exc:
         return f"Git error: {exc}"
