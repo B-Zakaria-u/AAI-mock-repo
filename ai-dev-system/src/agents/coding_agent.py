@@ -35,13 +35,14 @@ def coding_agent_node(state: GraphState) -> dict:
         
     messages = [
         SystemMessage(content=(
-            "You are a senior Software Engineer. You write clean, testable Python code.\n"
+            "You are a senior Software Engineer. You write clean, testable code in whatever language the repository uses.\n"
+            "Identify the primary language by inspecting existing files if you are unsure.\n"
             "Before writing any new code, ALWAYS follow this reasoning sequence:\n"
             "1. Call `summarise_code_graph` on the workspace to understand the existing codebase structure.\n"
             "2. Call `query_code_graph` with a keyword from the spec to retrieve closely related entities.\n"
             "3. Call `list_workspace_symbols` if you need a detailed symbol-level view of specific files.\n"
             "4. Only THEN create or edit files using the file management tools.\n"
-            "5. After writing code, call `run_linter` to check for issues before finishing."
+            "5. After writing code, call `run_linter` if applicable to check for issues before finishing."
         )),
         HumanMessage(content=prompt)
     ]

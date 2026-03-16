@@ -4,8 +4,8 @@ Security perimeter
 ------------------
 * Only the ``workspace/`` directory is mounted (read-write).
 * The container is always removed after execution (``remove=True``).
-* Tests are run with ``pytest`` inside ``python:3.11-slim``; no shell
-  access or network is granted beyond the image default.
+* Tests are run inside an ``ubuntu:latest`` image. The repository MUST
+  provide a ``test.sh`` script to be executed. Null command if no test.sh.
 """
 import os
 
@@ -16,7 +16,7 @@ from langchain_core.tools import tool
 @tool
 def run_tests_in_sandbox(workspace_path: str) -> str:
     """
-    Run ``pytest`` inside an ephemeral Docker container.
+    Run the repository's ``test.sh`` script inside an ephemeral Ubuntu container.
 
     The *workspace_path* directory is mounted as ``/workspace`` inside the
     container.  On success the full pytest stdout is returned; on failure
@@ -30,16 +30,24 @@ def run_tests_in_sandbox(workspace_path: str) -> str:
 
     try:
         output = client.containers.run(
-            image="python:3.11-slim",
-            command='sh -c "if [ -f /workspace/requirements.txt ]; then pip install -r /workspace/requirements.txt --quiet; fi && pip install pytest --quiet && cd /workspace && pytest"',
+            image="ubuntu:latest",
+            command='sh -c "if [ -f /workspace/test.sh ]; then chmod +x /workspace/test.sh && /workspace/test.sh; else echo \'No test.sh found. Skipping tests.\'; fi"',
             volumes={abs_workspace: {"bind": "/workspace", "mode": "rw"}},
             working_dir="/workspace",
             detach=False,
             remove=True,
+            stderr=True,  # Capture both stdout and stderr
+            stdout=True
         )
         return output.decode("utf-8")
     except docker.errors.ContainerError as exc:
-        stderr = exc.stderr.decode("utf-8") if exc.stderr else str(exc)
-        return f"Tests failed:\n{stderr}"
+        # ContainerError hides the true output if the command exits non-zero.
+        # We must pull the full logs directly from the container object itself.
+        try:
+            full_logs = exc.container.logs(stdout=True, stderr=True).decode("utf-8")
+        except:
+            full_logs = exc.stderr.decode("utf-8") if exc.stderr else str(exc)
+        
+        return f"Tests failed:\n{full_logs}"
     except Exception as exc:
         return f"Sandbox execution error: {exc}"

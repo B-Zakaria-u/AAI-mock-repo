@@ -21,7 +21,7 @@ def analyze_file_ast(file_path: str) -> str:
     Returns imports, top-level functions, and classes (with their methods).
 
     Args:
-        file_path: Absolute or relative path to the ``.py`` file.
+        file_path: Absolute or relative path to the file.
     """
     return json.dumps(parse_file(file_path), indent=2)
 
@@ -35,8 +35,14 @@ def list_workspace_symbols(workspace_path: str) -> str:
     Args:
         workspace_path: Root directory to scan recursively.
     """
-    pattern = os.path.join(os.path.abspath(workspace_path), "**", "*.py")
-    results = {fp: parse_file(fp) for fp in glob.glob(pattern, recursive=True)}
+    extensions = ("*.py", "*.js", "*.ts", "*.java", "*.go", "*.cpp", "*.c", "*.cs", "*.rb", "*.php")
+    results = {}
+    
+    for ext in extensions:
+        pattern = os.path.join(os.path.abspath(workspace_path), "**", ext)
+        for fp in glob.glob(pattern, recursive=True):
+            results[fp] = parse_file(fp)
+            
     return json.dumps(results, indent=2)
 
 

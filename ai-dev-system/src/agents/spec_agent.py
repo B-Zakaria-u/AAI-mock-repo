@@ -17,7 +17,11 @@ def spec_agent_node(state: GraphState) -> dict:
         prompt += f"\nPrevious specification was rejected with this feedback. Please fix the spec:\n{feedback}"
         
     messages = [
-        SystemMessage(content="You are an expert AI systems architect. Produce a clear, actionable Python technical specification."),
+        SystemMessage(content=(
+            "You are an expert AI systems architect. Produce a clear, actionable technical specification. "
+            "Examine the ticket and deduce the appropriate programming language and framework. "
+            "Ensure your specification matches the conventions and tech stack of the repository."
+        )),
         HumanMessage(content=prompt)
     ]
     

@@ -5,63 +5,44 @@ import glob
 from langchain_core.tools import tool
 
 
+import re
+
 def _parse_file(file_path: str) -> dict:
     """
-    Internal helper: parses a single Python file with the ast module.
-    Returns a structured dict of imports, classes (with methods), and functions.
+    Internal helper: parses a generic source file with Regex to find classes and functions.
     """
     try:
         with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
-            source = f.read()
+            lines = f.readlines()
     except OSError as e:
         return {"error": str(e)}
 
-    try:
-        tree = ast.parse(source, filename=file_path)
-    except SyntaxError as e:
-        return {"error": f"SyntaxError: {e}"}
-
-    imports: list[str] = []
-    functions: list[dict] = []
     classes: list[dict] = []
+    top_level_funcs: list[dict] = []
 
-    for node in ast.walk(tree):
-        # Collect imports
-        if isinstance(node, (ast.Import, ast.ImportFrom)):
-            if isinstance(node, ast.Import):
-                for alias in node.names:
-                    imports.append(alias.name)
-            else:
-                module = node.module or ""
-                for alias in node.names:
-                    imports.append(f"{module}.{alias.name}")
+    class_pattern = re.compile(r"^\s*(export\s+)?(public\s+)?class\s+([A-Za-z0-9_]+)")
+    func_pattern = re.compile(r"^\s*(export\s+)?(public\s+|private\s+|protected\s+)?(static\s+)?(async\s+)?(function|func|def)\s+([A-Za-z0-9_]+)")
+    arrow_pattern = re.compile(r"^\s*(export\s+)?(const|let|var)\s+([A-Za-z0-9_]+)\s*=\s*(\(.*\)|[^=]+)\s*=>")
 
-        # Collect top-level functions (depth-1 only)
-        elif isinstance(node, ast.FunctionDef) and isinstance(
-            getattr(node, "parent", None), ast.Module
-        ):
-            functions.append({"name": node.name, "lineno": node.lineno})
-
-        # Collect classes + their methods
-        elif isinstance(node, ast.ClassDef):
-            methods = [
-                {"name": n.name, "lineno": n.lineno}
-                for n in ast.walk(node)
-                if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
-            ]
-            classes.append(
-                {"name": node.name, "lineno": node.lineno, "methods": methods}
-            )
-
-    # Second pass: top-level functions (parent tagging approach via direct iteration)
-    top_level_funcs = []
-    for node in ast.iter_child_nodes(tree):
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            top_level_funcs.append({"name": node.name, "lineno": node.lineno})
+    for i, line in enumerate(lines):
+        lineno = i + 1
+        c_match = class_pattern.search(line)
+        if c_match:
+            classes.append({"name": c_match.group(3), "lineno": lineno, "methods": []})
+            continue
+            
+        f_match = func_pattern.search(line)
+        if f_match:
+            top_level_funcs.append({"name": f_match.group(6), "lineno": lineno})
+            continue
+            
+        a_match = arrow_pattern.search(line)
+        if a_match:
+            top_level_funcs.append({"name": a_match.group(3), "lineno": lineno})
 
     return {
         "file": file_path,
-        "imports": list(set(imports)),        # deduplicate
+        "imports": [],
         "top_level_functions": top_level_funcs,
         "classes": classes,
     }
@@ -70,11 +51,11 @@ def _parse_file(file_path: str) -> dict:
 @tool
 def analyze_file_ast(file_path: str) -> str:
     """
-    Parses a single Python file and returns its AST-extracted symbol table as a
-    JSON string: imports, top-level functions, and classes with their methods.
+    Parses a single source file and returns its extracted symbol table as a
+    JSON string: top-level functions, and classes.
 
     Args:
-        file_path: Absolute or relative path to the .py file to analyse.
+        file_path: Absolute or relative path to the source file to analyse.
     """
     result = _parse_file(file_path)
     return json.dumps(result, indent=2)
@@ -83,19 +64,20 @@ def analyze_file_ast(file_path: str) -> str:
 @tool
 def list_workspace_symbols(workspace_path: str) -> str:
     """
-    Walks every .py file in the given workspace directory and extracts
-    AST symbol information (imports, functions, classes) for each file.
+    Walks every source file in the given workspace directory and extracts
+    symbol information (functions, classes) for each file.
     Returns a merged JSON map keyed by file path.
 
     Args:
-        workspace_path: Root directory to scan recursively for Python files.
+        workspace_path: Root directory to scan recursively.
     """
-    pattern = os.path.join(os.path.abspath(workspace_path), "**", "*.py")
-    py_files = glob.glob(pattern, recursive=True)
-
+    extensions = ("*.py", "*.js", "*.ts", "*.java", "*.go", "*.cpp", "*.c", "*.cs", "*.rb", "*.php")
+    
     results = {}
-    for fp in py_files:
-        results[fp] = _parse_file(fp)
+    for ext in extensions:
+        pattern = os.path.join(os.path.abspath(workspace_path), "**", ext)
+        for fp in glob.glob(pattern, recursive=True):
+            results[fp] = _parse_file(fp)
 
     return json.dumps(results, indent=2)
 

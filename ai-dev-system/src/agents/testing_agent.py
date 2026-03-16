@@ -10,12 +10,13 @@ def testing_agent_node(state: GraphState) -> dict:
     # Look for our workspace to run tests inside
     workspace_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "workspace"))
     
-    # Run pytest securely via Docker custom tool
-    print("[ Testing Agent ] Spinning up Docker sandbox to run pytest...")
+    # Run testing script securely via Docker custom tool
+    print("[ Testing Agent ] Spinning up Docker sandbox to execute test.sh...")
     result = run_tests_in_sandbox.invoke(workspace_dir)
     
-    # Rough check for failures or Python crash/error messages
-    tests_passed = "Tests failed" not in result and "Failed to execute sandbox" not in result
+    # Generic check for failure keywords or explicit sandbox errors
+    failed_keywords = ["Tests failed", "Failed to execute sandbox", "FAIL", "ERR!"]
+    tests_passed = not any(kw in result for kw in failed_keywords)
     
     if tests_passed:
         print("[ Testing Agent ] Result: PASS. Code is fully verified.")
